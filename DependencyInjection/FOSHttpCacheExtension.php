@@ -57,10 +57,13 @@ class FOSHttpCacheExtension extends Extension
             $this->loadProxyClient($container, $loader, $config['proxy_client']);
         }
 
+        if (isset($config['proxy_server'])) {
+            $this->loadProxyServer($container, $loader, $config['proxy_server']);
+        }
+
         if ($config['cache_manager']['enabled']) {
             $loader->load('cache_manager.xml');
         }
-
 
         if ($config['tags']['enabled']) {
             // true or auto
@@ -211,7 +214,17 @@ class FOSHttpCacheExtension extends Extension
             }
         }
 
-        $container->setAlias($this->getAlias() . '.default_proxy_client', $this->getAlias() . '.proxy_client.' . $default);
+        $container->setAlias(
+            $this->getAlias() . '.default_proxy_client',
+            $this->getAlias() . '.proxy_client.' . $default
+        );
+
+        if (!$container->getDefinition($this->getAlias() . '.proxy.test_client.varnish')->isAbstract()) {
+            $container->setAlias(
+                $this->getAlias() . '.proxy.default_test_client',
+                $this->getAlias() . '.proxy.test_client.varnish'
+            );
+        }
     }
 
     private function loadVarnish(ContainerBuilder $container, XmlFileLoader $loader, array $config)
@@ -232,6 +245,11 @@ class FOSHttpCacheExtension extends Extension
                 )
             ;
         }
+
+        if ($config['test_client']) {
+            $container->getDefinition($this->getAlias() . '.proxy.test_client.varnish')
+                ->setAbstract(false);
+        }
     }
 
     private function loadNginx(ContainerBuilder $container, XmlFileLoader $loader, array $config)
@@ -246,6 +264,30 @@ class FOSHttpCacheExtension extends Extension
         $container->setParameter($this->getAlias() . '.proxy_client.nginx.servers', $config['servers']);
         $container->setParameter($this->getAlias() . '.proxy_client.nginx.base_url', $config['base_url']);
         $container->setParameter($this->getAlias() . '.proxy_client.nginx.purge_location', $config['purge_location']);
+    }
+
+    private function loadProxyServer(ContainerBuilder $container, XmlFileLoader $loader, array $config)
+    {
+        if (isset($config['varnish'])) {
+            $this->loadVarnishProxyServer($container, $config['varnish']);
+            $container->setAlias(
+                $this->getAlias() . '.default_proxy_server',
+                $this->getAlias() . '.proxy_server.varnish'
+            );
+        }
+    }
+
+    private function loadVarnishProxyServer(ContainerBuilder $container, array $config)
+    {
+        foreach ($config as $key => $value) {
+            $container->setParameter(
+                $this->getAlias() . '.proxy_server.varnish.' . $key,
+                $value
+            );
+        }
+
+        $container->getDefinition($this->getAlias() . '.proxy_server.varnish')
+            ->setAbstract(false);
     }
 
     private function loadTagRules(ContainerBuilder $container, array $config)

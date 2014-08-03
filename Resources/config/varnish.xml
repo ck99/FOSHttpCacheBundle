@@ -6,6 +6,9 @@
 
     <parameters>
         <parameter key="fos_http_cache.proxy_client.varnish.class">FOS\HttpCache\ProxyClient\Varnish</parameter>
+        <parameter key="fos_http_cache.proxy_client.varnish.test_client.class">Guzzle\Http\Client</parameter>
+        <parameter key="fos_http_cache.proxy_server.varnish.class">FOS\HttpCache\Test\Proxy\VarnishProxy</parameter>
+        <parameter key="fos_http_cache.proxy_process.curlopt_forbid_reuse" type="constant">CURLOPT_FORBID_REUSE</parameter>
     </parameters>
 
     <services>
@@ -14,6 +17,28 @@
             <argument>%fos_http_cache.proxy_client.varnish.servers%</argument>
             <argument>%fos_http_cache.proxy_client.varnish.base_url%</argument>
         </service>
+
+        <service id="fos_http_cache.proxy.test_client.varnish"
+                 class="%fos_http_cache.proxy_client.varnish.test_client.class%"
+                 abstract="true">
+            <argument>%fos_http_cache.proxy_client.varnish.base_url%</argument>
+            <argument type="collection">
+                <argument key="%fos_http_cache.proxy_process.curlopt_forbid_reuse%">true</argument>
+            </argument>
+        </service>
+
+        <service id="fos_http_cache.proxy_server.varnish"
+                 class="%fos_http_cache.proxy_server.varnish.class%"
+                 abstract="true">
+            <argument>%fos_http_cache.proxy_server.varnish.config_file%</argument>
+            <call method="setBinary">
+                <argument>%fos_http_cache.proxy_server.varnish.binary%</argument>
+            </call>
+            <call method="setPort">
+                <argument>%fos_http_cache.proxy_server.varnish.port%</argument>
+            </call>
+        </service>
+
     </services>
 
 </container>

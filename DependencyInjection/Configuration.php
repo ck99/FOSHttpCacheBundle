@@ -95,6 +95,7 @@ class Configuration implements ConfigurationInterface
 
         $this->addCacheControlSection($rootNode);
         $this->addProxyClientSection($rootNode);
+        $this->addProxyServerSection($rootNode);
         $this->addCacheManagerSection($rootNode);
         $this->addTagSection($rootNode);
         $this->addInvalidationSection($rootNode);
@@ -253,6 +254,10 @@ class Configuration implements ConfigurationInterface
                                     ->defaultNull()
                                     ->info('Guzzle service to use for customizing the requests.')
                                 ->end()
+                                ->booleanNode('test_client')
+                                    ->defaultValue($this->debug)
+                                    ->info('Whether to enable the Varnish proxy test client. Defaults to kernel.debug.')
+                                ->end()
                             ->end()
                         ->end()
 
@@ -282,6 +287,28 @@ class Configuration implements ConfigurationInterface
                             ->end()
                         ->end()
 
+                    ->end()
+                ->end()
+            ->end();
+    }
+
+    private function addProxyServerSection(ArrayNodeDefinition $rootNode)
+    {
+        $rootNode
+            ->children()
+                ->arrayNode('proxy_server')
+                    ->children()
+                        ->arrayNode('varnish')
+                            ->children()
+                                ->scalarNode('binary')
+                                    ->defaultValue('varnishd')
+                                ->end()
+                                ->integerNode('port')
+                                    ->defaultValue(6181)
+                                ->end()
+                                ->scalarNode('config_file')->isRequired()->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end();
